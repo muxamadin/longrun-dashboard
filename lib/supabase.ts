@@ -1,21 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = 'https://zjgzjfzpvmyltncehsee.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqZ3pqZnpwdm15bHRuY2Voc2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3ODE3ODAsImV4cCI6MjA5NjM1Nzc4MH0.ZBXEfgb3RbHjlQRrekGHQhtv212vlJFy9vKsDbjWPgU'
-
-let _supabase: SupabaseClient | null = null
-
-export function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY
-    )
-  }
-  return _supabase
-}
-
-export const supabase = getSupabase()
+export const supabase = createClient(
+  'https://zjgzjfzpvmyltncehsee.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqZ3pqZnpwdm15bHRuY2Voc2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3ODE3ODAsImV4cCI6MjA5NjM1Nzc4MH0.ZBXEfgb3RbHjlQRrekGHQhtv212vlJFy9vKsDbjWPgU'
+)
 
 export type Profile = {
   id: string
