@@ -17,19 +17,15 @@ export default function CallsPage() {
       const json = await res.json()
       const allCalls: any[] = json.calls || []
 
-      const now = new Date()
-      // Use UTC date boundaries to match Bland.ai timestamps
-      const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-      const weekStart = todayUTC - 6 * 24 * 60 * 60 * 1000
-      // Also include yesterday local time to catch calls made "today" in any timezone
-      const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-      const todayStart = Math.min(todayUTC, todayLocal)
+      const now = Date.now()
+      const last24h = now - 24 * 60 * 60 * 1000
+      const last7d  = now - 7  * 24 * 60 * 60 * 1000
 
       let result = allCalls
       if (filter === 'today') {
-        result = allCalls.filter(c => new Date(c.created_at).getTime() >= todayStart)
+        result = allCalls.filter(c => new Date(c.created_at).getTime() >= last24h)
       } else if (filter === 'week') {
-        result = allCalls.filter(c => new Date(c.created_at).getTime() >= weekStart)
+        result = allCalls.filter(c => new Date(c.created_at).getTime() >= last7d)
       }
 
       setCalls(result)
