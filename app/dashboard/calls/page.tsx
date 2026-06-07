@@ -3,8 +3,6 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import Sidebar from '@/components/Sidebar'
 
-const BLAND_KEY = 'org_4b9e6f2f3b042f728814816879300affac10ee8d183d24bb3bd06d0ffade2d90862e58f4e8f3391837a069'
-
 export default function CallsPage() {
   const [calls, setCalls] = useState<any[]>([])
   const [filter, setFilter] = useState('today')
@@ -17,9 +15,7 @@ export default function CallsPage() {
 
   const loadCalls = useCallback(async () => {
     try {
-      const res = await fetch('https://api.bland.ai/v1/calls?page_size=200', {
-        headers: { authorization: BLAND_KEY },
-      })
+      const res = await fetch('/api/bland-calls', { cache: 'no-store' })
       const json = await res.json()
       const allCalls: any[] = json.calls || []
 
@@ -55,9 +51,7 @@ export default function CallsPage() {
     setTranscript('')
     setTranscriptLoading(true)
     try {
-      const res = await fetch(`https://api.bland.ai/v1/calls/${call.call_id}`, {
-        headers: { authorization: BLAND_KEY },
-      })
+      const res = await fetch(`/api/bland-transcript?call_id=${call.call_id}`, { cache: 'no-store' })
       const data = await res.json()
       const lines: string[] = (data.transcripts || []).map((t: any) =>
         `${t.user === 'assistant' ? '🤖 Mike' : '👤 Driver'}: ${t.text}`
