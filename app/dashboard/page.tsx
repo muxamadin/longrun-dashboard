@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import { useRouter } from 'next/navigation'
 
+
 export default function Dashboard() {
   const [stats, setStats] = useState({ leads: 0, leadsToday: 0, called: 0, hot: 0, drivers: 0, pending_ht: 0, open_bd: 0 })
   const [recentLeads, setRecentLeads] = useState<any[]>([])
@@ -22,37 +23,26 @@ export default function Dashboard() {
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'manager') router.push('/driver')
   }
 
   async function loadData() {
-    const todayISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    const [
-      { count: totalLeads },
-      { count: leadsToday },
-      { count: hotLeads },
-      { count: totalDrivers },
-      { count: pendingHT },
-      { count: openBD },
-      { data: leads },
-      blandRes,
-    ] = await Promise.all([
-      supabase.from('leads').select('*', { count: 'exact', head: true }),
-      supabase.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
-      supabase.from('leads').select('*', { count: 'exact', head: true }).ilike('status', '%Hot%'),
-      supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('home_time_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('breakdowns').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-      supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(5),
+    const [statsRes, blandRes] = await Promise.all([
+      fetch('/api/stats', { cache: 'no-store' }).then(r => r.json()).catch(() => ({})),
       fetch('/api/bland-calls', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ calls: [] })),
     ])
     const blandCalls: any[] = blandRes.calls || []
     const calledToday = blandCalls.filter(c => new Date(c.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000).length
-    const recent5Calls = blandCalls.slice(0, 5)
-    setStats({ leads: totalLeads||0, leadsToday: leadsToday||0, called: calledToday, hot: hotLeads||0, drivers: totalDrivers||0, pending_ht: pendingHT||0, open_bd: openBD||0 })
-    setRecentLeads(leads || [])
-    setRecentCalls(recent5Calls)
+    setStats({
+      leads: statsRes.totalLeads || 0,
+      leadsToday: statsRes.leadsToday || 0,
+      called: calledToday,
+      hot: statsRes.hotLeads || 0,
+      drivers: statsRes.totalDrivers || 0,
+      pending_ht: statsRes.pendingHT || 0,
+      open_bd: statsRes.openBD || 0,
+    })
+    setRecentLeads(statsRes.recentLeads || [])
+    setRecentCalls(blandCalls.slice(0, 5))
     setLoading(false)
   }
 
