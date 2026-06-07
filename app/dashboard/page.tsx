@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar'
 import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ leads: 0, called: 0, hot: 0, drivers: 0, pending_ht: 0, open_bd: 0 })
+  const [stats, setStats] = useState({ leads: 0, leadsToday: 0, called: 0, hot: 0, drivers: 0, pending_ht: 0, open_bd: 0 })
   const [recentLeads, setRecentLeads] = useState<any[]>([])
   const [recentCalls, setRecentCalls] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,8 +27,10 @@ export default function Dashboard() {
   }
 
   async function loadData() {
+    const todayISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const [
       { count: totalLeads },
+      { count: leadsToday },
       { count: hotLeads },
       { count: totalDrivers },
       { count: pendingHT },
@@ -37,6 +39,7 @@ export default function Dashboard() {
       blandRes,
     ] = await Promise.all([
       supabase.from('leads').select('*', { count: 'exact', head: true }),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
       supabase.from('leads').select('*', { count: 'exact', head: true }).ilike('status', '%Hot%'),
       supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('home_time_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -45,17 +48,17 @@ export default function Dashboard() {
       fetch('/api/bland-calls', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ calls: [] })),
     ])
     const blandCalls: any[] = blandRes.calls || []
-    const totalCalled = blandCalls.length
+    const calledToday = blandCalls.filter(c => new Date(c.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000).length
     const recent5Calls = blandCalls.slice(0, 5)
-    setStats({ leads: totalLeads||0, called: totalCalled, hot: hotLeads||0, drivers: totalDrivers||0, pending_ht: pendingHT||0, open_bd: openBD||0 })
+    setStats({ leads: totalLeads||0, leadsToday: leadsToday||0, called: calledToday, hot: hotLeads||0, drivers: totalDrivers||0, pending_ht: pendingHT||0, open_bd: openBD||0 })
     setRecentLeads(leads || [])
     setRecentCalls(recent5Calls)
     setLoading(false)
   }
 
   const statCards = [
-    { label: 'Leads Found', value: stats.leads, icon: '🎯', color: '#3B82F6', sub: `Mike found total` },
-    { label: 'Called', value: stats.called, icon: '📞', color: '#8B5CF6', sub: `of ${stats.leads} leads` },
+    { label: 'Leads Today', value: stats.leadsToday, icon: '🎯', color: '#3B82F6', sub: `${stats.leads} total all time` },
+    { label: 'Called Today', value: stats.called, icon: '📞', color: '#8B5CF6', sub: `last 24 hours` },
     { label: 'Hot Leads', value: stats.hot, icon: '🔥', color: '#F59E0B', sub: 'Ready to hire' },
     { label: 'Active Drivers', value: stats.drivers, icon: '🚛', color: '#10B981', sub: `${stats.open_bd} breakdown · ${stats.pending_ht} home time` },
   ]
