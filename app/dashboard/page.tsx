@@ -53,10 +53,10 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { label: 'Total Leads', value: stats.leads, icon: '🎯', color: '#3B82F6', sub: `${stats.called} called` },
-    { label: 'Hot Leads 🔥', value: stats.hot, icon: '🔥', color: '#F59E0B', sub: 'Ready to hire' },
-    { label: 'Active Drivers', value: stats.drivers, icon: '🚛', color: '#10B981', sub: 'On the road' },
-    { label: 'Open Breakdowns', value: stats.open_bd, icon: '🔴', color: '#EF4444', sub: `${stats.pending_ht} home time pending` },
+    { label: 'Leads Found', value: stats.leads, icon: '🎯', color: '#3B82F6', sub: `Mike found total` },
+    { label: 'Called', value: stats.called, icon: '📞', color: '#8B5CF6', sub: `of ${stats.leads} leads` },
+    { label: 'Hot Leads', value: stats.hot, icon: '🔥', color: '#F59E0B', sub: 'Ready to hire' },
+    { label: 'Active Drivers', value: stats.drivers, icon: '🚛', color: '#10B981', sub: `${stats.open_bd} breakdown · ${stats.pending_ht} home time` },
   ]
 
   function statusBadge(status: string) {

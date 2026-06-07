@@ -12,17 +12,10 @@ const managerLinks = [
   { href: '/dashboard/broadcast', icon: '📡', label: 'Broadcast' },
 ]
 
-const driverLinks = [
-  { href: '/driver', icon: '🏠', label: 'Home' },
-  { href: '/driver/breakdown', icon: '🔴', label: 'Report Breakdown' },
-  { href: '/driver/home-time', icon: '📅', label: 'Home Time' },
-  { href: '/driver/weigh-stations', icon: '⚖️', label: 'Weigh Stations' },
-]
-
 export default function Sidebar({ role }: { role: 'manager' | 'driver' }) {
   const pathname = usePathname()
   const router = useRouter()
-  const links = role === 'manager' ? managerLinks : driverLinks
+  const links = managerLinks
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -53,9 +46,7 @@ export default function Sidebar({ role }: { role: 'manager' | 'driver' }) {
 
       {/* Role badge */}
       <div style={{ marginBottom: '24px', padding: '0 8px' }}>
-        <span className={role === 'manager' ? 'badge badge-blue' : 'badge badge-green'}>
-          {role === 'manager' ? '⚙️ Manager' : '🚛 Driver'}
-        </span>
+        <span className="badge badge-blue">⚙️ Manager</span>
       </div>
 
       {/* Nav */}
