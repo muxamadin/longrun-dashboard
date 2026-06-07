@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar'
 
 export default function CallsPage() {
   const [calls, setCalls] = useState<any[]>([])
-  const [filter, setFilter] = useState('today')
+  const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<any>(null)
