@@ -29,26 +29,27 @@ export default function Dashboard() {
   async function loadData() {
     const [
       { count: totalLeads },
-      { count: calledLeads },
       { count: hotLeads },
       { count: totalDrivers },
       { count: pendingHT },
       { count: openBD },
       { data: leads },
-      { data: calls },
+      blandRes,
     ] = await Promise.all([
       supabase.from('leads').select('*', { count: 'exact', head: true }),
-      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('called', true),
       supabase.from('leads').select('*', { count: 'exact', head: true }).ilike('status', '%Hot%'),
       supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('home_time_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('breakdowns').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(5),
-      supabase.from('calls').select('*').order('created_at', { ascending: false }).limit(5),
+      fetch('/api/bland-calls', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ calls: [] })),
     ])
-    setStats({ leads: totalLeads||0, called: calledLeads||0, hot: hotLeads||0, drivers: totalDrivers||0, pending_ht: pendingHT||0, open_bd: openBD||0 })
+    const blandCalls: any[] = blandRes.calls || []
+    const totalCalled = blandCalls.length
+    const recent5Calls = blandCalls.slice(0, 5)
+    setStats({ leads: totalLeads||0, called: totalCalled, hot: hotLeads||0, drivers: totalDrivers||0, pending_ht: pendingHT||0, open_bd: openBD||0 })
     setRecentLeads(leads || [])
-    setRecentCalls(calls || [])
+    setRecentCalls(recent5Calls)
     setLoading(false)
   }
 
@@ -123,17 +124,21 @@ export default function Dashboard() {
               <a href="/dashboard/calls" style={{ color: '#3B82F6', fontSize: '13px', textDecoration: 'none' }}>View all →</a>
             </div>
             <div>
-              {recentCalls.map(call => (
-                <div key={call.id} style={{ padding: '14px 24px', borderBottom: '1px solid rgba(30,58,95,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '500' }}>{call.driver_name}</span>
-                    {statusBadge(call.interest_level)}
+              {recentCalls.map((call, i) => {
+                const name = call.variables?.name || call.variables?.driver_name || call.to || '—'
+                const answered = call.completed && call.answered_by !== 'voicemail' && call.call_length > 0.3
+                return (
+                  <div key={call.c_id || call.call_id || i} style={{ padding: '14px 24px', borderBottom: '1px solid rgba(30,58,95,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '500' }}>{name}</span>
+                      <span className={`badge ${answered ? 'badge-green' : 'badge-gray'}`}>{answered ? '✅ Answered' : '📩 Voicemail'}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#8BA3C7' }}>{call.to} · {call.created_at ? new Date(call.created_at).toLocaleString() : ''}</div>
+                    {call.summary && <div style={{ fontSize: '12px', color: '#8BA3C7', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>{call.summary}</div>}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#8BA3C7' }}>{call.phone} · {new Date(call.created_at).toLocaleDateString()}</div>
-                  {call.summary && <div style={{ fontSize: '12px', color: '#8BA3C7', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>{call.summary}</div>}
-                </div>
-              ))}
-              {recentCalls.length === 0 && <div style={{ padding: '32px', textAlign: 'center', color: '#8BA3C7', fontSize: '14px' }}>No calls yet — start calling from Mike bot</div>}
+                )
+              })}
+              {recentCalls.length === 0 && <div style={{ padding: '32px', textAlign: 'center', color: '#8BA3C7', fontSize: '14px' }}>No calls yet</div>}
             </div>
           </div>
         </div>
